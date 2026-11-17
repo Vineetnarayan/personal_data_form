@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>व्यक्तिगत डेटा पोर्टल — लॉगिन व Excel, Word, CSV एक्सपोर्ट</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- ExcelJS for .xlsx with embedded photo -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <!-- docx for .docx with embedded photo -->
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.cjs"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans Devanagari', 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .toast-enter {
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .drop-active {
+      border-color: #4f46e5 !important;
+      background-color: #eef2ff !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen antialiased">
+
+  <!-- ================= LOGIN SCREEN ================= -->
+  <section id="loginView" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden">
+      <div class="bg-gradient-to-r from-indigo-600 to-slate-900 px-6 py-6 text-white">
+        <div class="w-11 h-11 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center mb-3">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold">व्यक्तिगत डेटा पोर्टल लॉगिन</h1>
+        <p class="text-xs text-indigo-100 mt-1">अपना डेटा फॉर्म खोलने के लिए लॉगिन आईडी और पासवर्ड दर्ज करें</p>
+      </div>
+
+      <form id="loginForm" class="p-6 space-y-4" novalidate>
+        <div>
+          <label for="loginId" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">लॉगिन आईडी (Login ID)</label>
+          <input id="loginId" type="text" required placeholder="अपना यूजरनेम लिखें" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+        </div>
+
+        <div>
+          <label for="loginPassword" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">पासवर्ड (Password)</label>
+          <div class="relative">
+            <input id="loginPassword" type="password" required placeholder="अपना पासवर्ड लिखें" class="w-full px-3.5 py-2.5 pr-11 rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+            <button id="togglePwd" type="button" aria-label="पासवर्ड दिखाएँ या छिपाएँ" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md">
+          लॉगिन करें
+        </button>
+
+        <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
+          <span>डिफ़ॉल्ट ID: <strong class="text-slate-700">admin</strong> | पासवर्ड: <strong class="text-slate-700">123456</strong></span>
+          <button id="btnAutoDemoLogin" type="button" class="text-indigo-600 hover:text-indigo-700 font-semibold text-left sm:text-right">
+            डेमो लॉगिन भरें
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= MAIN APP SCREEN ================= -->
+  <div id="appView" class="hidden">
+    <!-- Top Executive Header -->
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-b border-slate-800">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-indigo-200 text-xs font-medium tracking-wide mb-2.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            लॉगिन: <span id="activeUserLabel" class="font-semibold text-white">admin</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">व्यक्तिगत डेटा फॉर्म और डॉक्यूमेंट एक्सपोर्ट</h1>
+          <p class="text-sm text-slate-300 mt-1.5 max-w-2xl">अपनी जानकारी और पासपोर्ट/प्रोफ़ाइल फोटो अपलोड करें, और एक क्लिक में प्रोफेशनल Excel (.xlsx), MS Word (.docx) व CSV (.csv) फाइलें प्राप्त करें।</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button id="btnSample" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition backdrop-blur-sm">
+            <svg class="w-4 h-4 text-indigo-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            उदाहरण डेटा भरें
+          </button>
+          <button id="btnReset" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-400/25 transition">
+            फॉर्म साफ करें
+          </button>
+          <button id="btnOpenCreds" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-100 border border-indigo-400/30 transition">
+            पासवर्ड बदलें
+          </button>
+          <button id="btnLogout" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30 transition">
+            लॉगआउट
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 -mt-4 pb-12">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Personal Details Form (7 cols) -->
+        <section class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              </div>
+              <div>
+                <h2 class="text-base font-semibold text-slate-900">व्यक्तिगत विवरण</h2>
+                <p class="text-xs text-slate-500">सभी जरूरी जानकारी साफ-साफ भरें</p>
+              </div>
+            </div>
+            <span class="text-xs font-medium text-slate-400">* अनिवार्य फील्ड</span>
+          </div>
+
+          <form id="personalForm" class="p-6 space-y-5" novalidate>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="fullName" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">पूरा नाम (Full Name) <span class="text-rose-500">*</span></label>
+                <input id="fullName" name="fullName" type="text" required placeholder="उदा. राहुल शर्मा" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+              </div>
+
+              <div>
+                <label for="fatherName" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">पिता / अभिभावक का नाम</label>
+                <input id="fatherName" name="fatherName" type="text" placeholder="उदा. सुरेश शर्मा" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+              </div>
+
+              <div>
+                <label for="dob" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">जन्मतिथि (Date of Birth)</label>
+                <input id="dob" name="dob" type="date" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+              </div>
+
+              <div>
+                <label for="gender" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">लिंग (Gender)</label>
+                <select id="gender" name="gender" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition">
+                  <option value="">चुनें...</option>
+                  <option value="पुरुष (Male)">पुरुष (Male)</option>
+                  <option value="महिला (Female)">महिला (Female)</option>
+                  <option value="अन्य (Other)">अन्य (Other)</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="phone" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">मोबाइल नंबर <span class="text-rose-500">*</span></label>
+                <input id="phone" name="phone" type="tel" required placeholder="उदा. 9876543210" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+              </div>
+
+              <div>
+                <label for="email" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">ईमेल (Email)</label>
+                <input id="email" name="email" type="email" placeholder="उदा. rahul@example.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+              </div>
+            </div>
+
+            <div>
+              <label for="courseOrRole" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">कोर्स / पद / पेशा</label>
+              <input id="courseOrRole" name="courseOrRole" type="text" placeholder="उदा. BCA / सॉफ्टवेयर डेवलपर" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+            </div>
+
+            <div>
+              <label for="address" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">पूरा पता (Address)</label>
+              <textarea id="address" name="address" rows="2" placeholder="उदा. गोमती नगर, लखनऊ, उत्तर प्रदेश" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition"></textarea>
+            </div>
+
+            <div>
+              <label for="notes" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">अतिरिक्त विवरण (Notes)</label>
+              <textarea id="notes" name="notes" rows="2" placeholder="कोई अन्य जानकारी जो आप जोड़ना चाहते हैं..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition"></textarea>
+            </div>
+          </form>
+        </section>
+
+        <!-- Right: Photo Upload & Export Actions (5 cols) -->
+        <aside class="lg:col-span-5 space-y-6">
+          <!-- Drag & Drop Photo Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+              <h2 class="text-base font-semibold text-slate-900">प्रोफ़ाइल फोटो अपलोड</h2>
+              <span class="text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium">JPG / PNG</span>
+            </div>
+
+            <div class="p-6">
+              <div id="dropZone" class="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/60 p-5 text-center transition cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30">
+                <div class="flex flex-col items-center">
+                  <div id="photoBox" class="w-28 h-28 rounded-2xl border border-slate-200 bg-white shadow-sm ring-4 ring-indigo-50 flex items-center justify-center overflow-hidden mb-3">
+                    <img id="photoPreview" alt="फोटो प्रीव्यू" class="hidden w-full h-full object-cover" />
+                    <div id="photoPlaceholder" class="text-center px-2 text-slate-400">
+                      <svg class="w-10 h-10 mx-auto text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <label for="photoInput" class="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    फोटो चुनें या यहाँ ड्रॉप करें
+                  </label>
+                  <input id="photoInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden" />
+                  <p id="photoMeta" class="text-xs text-slate-500 mt-2.5">कोई फोटो नहीं चुनी गई</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Controls Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/70">
+              <h2 class="text-base font-semibold text-slate-900">डॉक्यूमेंट एक्सपोर्ट सेंटर</h2>
+              <p class="text-xs text-slate-500 mt-0.5">अपना पसंदीदा फाइल फॉर्मेट चुनें</p>
+            </div>
+
+            <div class="p-6 space-y-3">
+              <button id="btnExcel" type="button" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm flex items-center justify-between transition shadow-sm">
+                <span class="flex items-center gap-2.5">
+                  <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Excel (.xlsx) डाउनलोड करें
+                </span>
+                <span class="text-xs bg-black/20 px-2.5 py-0.5 rounded-md">डेटा + फोटो</span>
+              </button>
+
+              <button id="btnWord" type="button" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm flex items-center justify-between transition shadow-sm">
+                <span class="flex items-center gap-2.5">
+                  <svg class="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                  MS Word (.docx) डाउनलोड करें
+                </span>
+                <span class="text-xs bg-black/20 px-2.5 py-0.5 rounded-md">डेटा + फोटो</span>
+              </button>
+
+              <button id="btnCsv" type="button" class="w-full py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm flex items-center justify-between transition shadow-sm">
+                <span class="flex items-center gap-2.5">
+                  <svg class="w-5 h-5 text-amber-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  CSV (.csv) डाउनलोड करें
+                </span>
+                <span class="text-xs bg-black/20 px-2.5 py-0.5 rounded-md">सिर्फ टेक्स्ट</span>
+              </button>
+
+              <div class="pt-3 border-t border-slate-100">
+                <button id="btnAll" type="button" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-slate-900 to-indigo-900 hover:from-slate-800 hover:to-indigo-800 text-white font-semibold text-sm flex items-center justify-center gap-2 transition shadow-md">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  तीनों फाइलें एक साथ डाउनलोड करें
+                </button>
+              </div>
+              <p class="text-xs text-slate-500 pt-1 leading-relaxed">
+                नोट: CSV सिर्फ टेक्स्ट फॉर्मेट होता है, इसलिए उसमें फोटो का नाम सेव होगा, जबकि Excel और MS Word में आपकी असली फोटो भी जुड़ जाएगी।
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Live Professional Profile Preview Card -->
+      <section class="mt-6 bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+            <h2 class="text-base font-semibold text-slate-900">लाइव डिजिटल प्रोफ़ाइल प्रीव्यू</h2>
+          </div>
+          <span class="text-xs text-slate-500">यही डेटा आपकी फाइलों में सेव होगा</span>
+        </div>
+
+        <div class="p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pb-5 mb-5 border-b border-slate-100">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 overflow-hidden flex items-center justify-center shrink-0">
+              <img id="cardAvatar" alt="प्रोफ़ाइल फोटो" class="hidden w-full h-full object-cover" />
+              <span id="cardInitials" class="text-xl font-bold text-indigo-600">?</span>
+            </div>
+            <div>
+              <h3 id="cardName" class="text-lg font-bold text-slate-900">आपका नाम यहाँ दिखेगा</h3>
+              <p id="cardRole" class="text-sm text-slate-500">कोर्स / पद / पेशा</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-sm text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                  <th class="py-2.5 px-4 font-semibold w-1/3">फील्ड</th>
+                  <th class="py-2.5 px-4 font-semibold">आपका डेटा</th>
+                </tr>
+              </thead>
+              <tbody id="previewBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= CHANGE CREDENTIALS MODAL ================= -->
+  <div id="credsModal" class="hidden fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">लॉगिन आईडी और पासवर्ड बदलें</h3>
+        <button id="btnCloseCreds" type="button" class="text-slate-400 hover:text-slate-700 text-lg font-bold">&times;</button>
+      </div>
+      <form id="credsForm" class="p-5 space-y-4">
+        <div>
+          <label for="newLoginId" class="block text-xs font-semibold text-slate-600 mb-1">नई लॉगिन आईडी</label>
+          <input id="newLoginId" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+        </div>
+        <div>
+          <label for="newPassword" class="block text-xs font-semibold text-slate-600 mb-1">नया पासवर्ड</label>
+          <input id="newPassword" type="password" required minlength="4" placeholder="कम से कम 4 अक्षर" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button id="btnCancelCreds" type="button" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">रद्द करें</button>
+          <button type="submit" class="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white">सेव करें</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastBox" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm"></div>
+
+  <script>
+    const CRED_STORAGE_KEY = 'personal_portal_creds_v1';
+    const state = {
+      photoDataUrl: null,
+      photoName: '',
+      photoMime: '',
+      creds: { id: 'admin', pass: '123456' }
+    };
+
+    try {
+      const saved = localStorage.getItem(CRED_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id && parsed.pass) {
+          state.creds = parsed;
+        }
+      }
+    } catch (e) {
+      // Fallback to in-memory default credentials
+    }
+
+    const fieldDefs = [
+      { id: 'fullName', label: 'पूरा नाम' },
+      { id: 'fatherName', label: 'पिता / अभिभावक का नाम' },
+      { id: 'dob', label: 'जन्मतिथि' },
+      { id: 'gender', label: 'लिंग' },
+      { id: 'phone', label: 'मोबाइल नंबर' },
+      { id: 'email', label: 'ईमेल' },
+      { id: 'courseOrRole', label: 'कोर्स / पद' },
+      { id: 'address', label: 'पूरा पता' },
+      { id: 'notes', label: 'अतिरिक्त विवरण' }
+    ];
+
+    function showToast(message, type = 'info') {
+      const box = document.getElementById('toastBox');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+      const el = document.createElement('div');
+      el.className = `toast-enter px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${colors[type] || colors.info}`;
+      el.textContent = message;
+      box.appendChild(el);
+      setTimeout(() => {
+        el.remove();
+      }, 3200);
+    }
+
+    // Login Logic
+    document.getElementById('togglePwd').addEventListener('click', () => {
+      const pwdInput = document.getElementById('loginPassword');
+      pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('btnAutoDemoLogin').addEventListener('click', () => {
+      document.getElementById('loginId').value = state.creds.id;
+      document.getElementById('loginPassword').value = state.creds.pass;
+      showToast('डेमो आईडी और पासवर्ड भर दिए गए हैं। अब लॉगिन करें।', 'info');
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const enteredId = document.getElementById('loginId').value.trim();
+      const enteredPass = document.getElementById('loginPassword').value;
+
+      if (enteredId === state.creds.id && enteredPass === state.creds.pass) {
+        document.getElementById('loginView').classList.add('hidden');
+        document.getElementById('appView').classList.remove('hidden');
+        document.getElementById('activeUserLabel').textContent = state.creds.id;
+        showToast('सफलतापूर्वक लॉगिन हो गया!', 'success');
+      } else {
+        showToast('गलत लॉगिन आईडी या पासवर्ड। कृपया दोबारा जांचें।', 'error');
+      }
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      document.getElementById('appView').classList.add('hidden');
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('loginPassword').value = '';
+      showToast('आप लॉगआउट हो गए हैं।', 'info');
+    });
+
+    // Change Credentials Modal
+    function closeCredsModal() {
+      document.getElementById('credsModal').classList.add('hidden');
+    }
+    document.getElementById('btnOpenCreds').addEventListener('click', () => {
+      document.getElementById('newLoginId').value = state.creds.id;
+      document.getElementById('newPassword').value = '';
+      document.getElementById('credsModal').classList.remove('hidden');
+    });
+    document.getElementById('btnCloseCreds').addEventListener('click', closeCredsModal);
+    document.getElementById('btnCancelCreds').addEventListener('click', closeCredsModal);
+
+    document.getElementById('credsForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newId = document.getElementById('newLoginId').value.trim();
+      const newPass = document.getElementById('newPassword').value;
+      if (!newId || newPass.length < 4) {
+        showToast('आईडी और कम से कम 4 अक्षर का पासवर्ड डालें।', 'error');
+        return;
+      }
+      state.creds = { id: newId, pass: newPass };
+      try {
+        localStorage.setItem(CRED_STORAGE_KEY, JSON.stringify(state.creds));
+      } catch (err) {
+        // Ignore storage errors in restricted environments
+      }
+      document.getElementById('activeUserLabel').textContent = newId;
+      closeCredsModal();
+      showToast('नई लॉगिन आईडी और पासवर्ड सेव हो गए!', 'success');
+    });
+
+    // Form & Export Logic
+    function getFormData() {
+      const data = {};
+      fieldDefs.forEach(f => {
+        const el = document.getElementById(f.id);
+        data[f.id] = el ? el.value.trim() : '';
+      });
+      return data;
+    }
+
+    function validateRequired(data) {
+      if (!data.fullName) {
+        showToast('कृपया कम से कम अपना पूरा नाम जरूर भरें।', 'error');
+        document.getElementById('fullName').focus();
+        return false;
+      }
+      return true;
+    }
+
+    function renderPreview() {
+      const data = getFormData();
+      const tbody = document.getElementById('previewBody');
+      tbody.innerHTML = '';
+
+      document.getElementById('cardName').textContent = data.fullName || 'आपका नाम यहाँ दिखेगा';
+      document.getElementById('cardRole').textContent = data.courseOrRole || 'कोर्स / पद / पेशा';
+      const cardAvatar = document.getElementById('cardAvatar');
+      const cardInitials = document.getElementById('cardInitials');
+      if (state.photoDataUrl) {
+        cardAvatar.src = state.photoDataUrl;
+        cardAvatar.classList.remove('hidden');
+        cardInitials.classList.add('hidden');
+      } else {
+        cardAvatar.classList.add('hidden');
+        cardInitials.classList.remove('hidden');
+        cardInitials.textContent = data.fullName ? data.fullName.charAt(0).toUpperCase() : '?';
+      }
+
+      fieldDefs.forEach(f => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/70 transition';
+        const tdKey = document.createElement('td');
+        tdKey.className = 'py-2.5 px-4 font-medium text-slate-600';
+        tdKey.textContent = f.label;
+
+        const tdVal = document.createElement('td');
+        tdVal.className = 'py-2.5 px-4 text-slate-900';
+        tdVal.textContent = data[f.id] || '—';
+
+        tr.appendChild(tdKey);
+        tr.appendChild(tdVal);
+        tbody.appendChild(tr);
+      });
+
+      const trPhoto = document.createElement('tr');
+      trPhoto.className = 'hover:bg-slate-50/70 transition';
+      const tdPKey = document.createElement('td');
+      tdPKey.className = 'py-2.5 px-4 font-medium text-slate-600';
+      tdPKey.textContent = 'फोटो फाइल';
+      const tdPVal = document.createElement('td');
+      tdPVal.className = 'py-2.5 px-4 text-slate-900';
+      tdPVal.textContent = state.photoName || 'कोई फोटो नहीं';
+      trPhoto.appendChild(tdPKey);
+      trPhoto.appendChild(tdPVal);
+      tbody.appendChild(trPhoto);
+    }
+
+    function getSafeFileName(name) {
+      const clean = (name || 'Mera_Data').replace(/[^a-zA-Z0-9\u0900-\u097F_-]+/g, '_');
+      return clean || 'Mera_Data';
+    }
+
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function handlePhotoFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        showToast('कृपया केवल JPG या PNG फोटो ही चुनें।', 'error');
+        return;
+      }
+      state.photoName = file.name;
+      state.photoMime = file.type;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        state.photoDataUrl = ev.target.result;
+        const img = document.getElementById('photoPreview');
+        img.src = state.photoDataUrl;
+        img.classList.remove('hidden');
+        document.getElementById('photoPlaceholder').classList.add('hidden');
+        document.getElementById('photoMeta').textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        renderPreview();
+        showToast('फोटो सफलतापूर्वक अपलोड हो गई!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function exportCSV() {
+      const data = getFormData();
+      if (!validateRequired(data)) return;
+
+      const escapeCsv = (val) => `"${String(val || '').replace(/"/g, '""')}"`;
+      const headers = [...fieldDefs.map(f => f.label), 'फोटो फाइल का नाम'];
+      const values = [...fieldDefs.map(f => data[f.id]), state.photoName || 'कोई फोटो नहीं'];
+
+      const csvContent = '\uFEFF' +
+        headers.map(escapeCsv).join(',') + '\r\n' +
+        values.map(escapeCsv).join(',') + '\r\n';
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      triggerDownload(blob, `${getSafeFileName(data.fullName)}.csv`);
+      showToast('CSV फाइल डाउनलोड हो गई!', 'success');
+    }
+
+    async function getNormalizedImageBytes(dataUrl) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 400;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim / w, maxDim / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(async (blob) => {
+            if (!blob) return reject(new Error('Image conversion failed'));
+            const buf = await blob.arrayBuffer();
+            resolve({ buffer: buf, width: w, height: h, extension: 'png' });
+          }, 'image/png');
+        };
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+    }
+
+    async function exportExcel() {
+      const data = getFormData();
+      if (!validateRequired(data)) return;
+
+      if (typeof ExcelJS === 'undefined') {
+        showToast('Excel लाइब्रेरी लोड नहीं हो पाई। इंटरनेट कनेक्शन जांचें।', 'error');
+        return;
+      }
+
+      try {
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('व्यक्तिगत डेटा');
+
+        sheet.columns = [
+          { header: 'विवरण (Field)', key: 'field', width: 26 },
+          { header: 'आपका डेटा (Value)', key: 'value', width: 42 },
+          { header: 'फोटो (Photo)', key: 'photo', width: 24 }
+        ];
+
+        const headerRow = sheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF312E81' } };
+        headerRow.height = 26;
+
+        fieldDefs.forEach((f) => {
+          const row = sheet.addRow({ field: f.label, value: data[f.id] || '—', photo: '' });
+          row.getCell(1).font = { bold: true };
+          row.alignment = { vertical: 'middle', wrapText: true };
+          row.height = 22;
+        });
+
+        if (state.photoDataUrl) {
+          const imgInfo = await getNormalizedImageBytes(state.photoDataUrl);
+          const imageId = workbook.addImage({
+            buffer: imgInfo.buffer,
+            extension: 'png'
+          });
+          sheet.addImage(imageId, {
+            tl: { col: 2, row: 1 },
+            ext: { width: 130, height: 130 }
+          });
+        } else {
+          sheet.getCell('C2').value = 'कोई फोटो नहीं';
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        triggerDownload(blob, `${getSafeFileName(data.fullName)}.xlsx`);
+        showToast('Excel (.xlsx) फाइल डाउनलोड हो गई!', 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Excel फाइल बनाने में समस्या आई।', 'error');
+      }
+    }
+
+    async function exportWord() {
+      const data = getFormData();
+      if (!validateRequired(data)) return;
+
+      if (typeof docx === 'undefined') {
+        const rowsHtml = fieldDefs.map(f =>
+          `<tr><td style="padding:8px;border:1px solid #cbd5e1;font-weight:bold;background:#f8fafc;">${f.label}</td><td style="padding:8px;border:1px solid #cbd5e1;">${(data[f.id] || '—').replace(/</g, '&lt;')}</td></tr>`
+        ).join('');
+        const imgHtml = state.photoDataUrl
+          ? `<div style="margin:12px 0;"><img src="${state.photoDataUrl}" width="130" height="130" style="border-radius:8px;border:1px solid #cbd5e1;" /></div>`
+          : '';
+        const htmlDoc = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+          <head><meta charset="utf-8"><title>${data.fullName}</title></head>
+          <body style="font-family: Arial, sans-serif;">
+            <h2 style="color:#312e81;">व्यक्तिगत विवरण (Personal Profile)</h2>
+            ${imgHtml}
+            <table style="border-collapse:collapse;width:100%;">${rowsHtml}</table>
+          </body></html>`;
+        const blob = new Blob(['\uFEFF', htmlDoc], { type: 'application/msword' });
+        triggerDownload(blob, `${getSafeFileName(data.fullName)}.doc`);
+        showToast('MS Word (.doc) फाइल डाउनलोड हो गई!', 'success');
+        return;
+      }
+
+      try {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ImageRun, HeadingLevel, AlignmentType } = docx;
+
+        const children = [
+          new Paragraph({
+            text: 'व्यक्तिगत विवरण (Personal Profile)',
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 240 }
+          })
+        ];
+
+        if (state.photoDataUrl) {
+          const imgInfo = await getNormalizedImageBytes(state.photoDataUrl);
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 240 },
+              children: [
+                new ImageRun({
+                  data: imgInfo.buffer,
+                  transformation: { width: 130, height: 130 }
+                })
+              ]
+            })
+          );
+        }
+
+        const tableRows = fieldDefs.map(f =>
+          new TableRow({
+            children: [
+              new TableCell({
+                width: { size: 35, type: WidthType.PERCENTAGE },
+                children: [new Paragraph({ children: [new TextRun({ text: f.label, bold: true })] })]
+              }),
+              new TableCell({
+                width: { size: 65, type: WidthType.PERCENTAGE },
+                children: [new Paragraph({ text: data[f.id] || '—' })]
+              })
+            ]
+          })
+        );
+
+        children.push(
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: tableRows
+          })
+        );
+
+        const doc = new Document({
+          sections: [{ children }]
+        });
+
+        const blob = await Packer.toBlob(doc);
+        triggerDownload(blob, `${getSafeFileName(data.fullName)}.docx`);
+        showToast('MS Word (.docx) फाइल डाउनलोड हो गई!', 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Word फाइल बनाने में समस्या आई।', 'error');
+      }
+    }
+
+    function createSampleAvatarDataUrl() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+        <rect width="240" height="240" rx="24" fill="#312e81"/>
+        <circle cx="120" cy="90" r="40" fill="#e0e7ff"/>
+        <path d="M52 205c0-37.5 30.4-68 68-68s68 30.5 68 68" fill="#e0e7ff"/>
+      </svg>`;
+      return 'data:image/svg+xml;base64,' + btoa(svg);
+    }
+
+    document.getElementById('personalForm').addEventListener('input', renderPreview);
+
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      handlePhotoFile(e.target.files[0]);
+    });
+
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drop-active');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drop-active');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drop-active');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handlePhotoFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    document.getElementById('btnSample').addEventListener('click', () => {
+      document.getElementById('fullName').value = 'राहुल शर्मा';
+      document.getElementById('fatherName').value = 'सुरेश शर्मा';
+      document.getElementById('dob').value = '2002-08-15';
+      document.getElementById('gender').value = 'पुरुष (Male)';
+      document.getElementById('phone').value = '9876543210';
+      document.getElementById('email').value = 'rahul.sharma@example.com';
+      document.getElementById('courseOrRole').value = 'BCA (ऑफिस ऑटोमेशन प्रोजेक्ट)';
+      document.getElementById('address').value = 'गोमती नगर, लखनऊ, उत्तर प्रदेश';
+      document.getElementById('notes').value = 'HTML, CSS और JavaScript द्वारा बनाया गया व्यक्तिगत डेटा फॉर्म प्रोजेक्ट।';
+
+      state.photoDataUrl = createSampleAvatarDataUrl();
+      state.photoName = 'sample_photo.png';
+      const img = document.getElementById('photoPreview');
+      img.src = state.photoDataUrl;
+      img.classList.remove('hidden');
+      document.getElementById('photoPlaceholder').classList.add('hidden');
+      document.getElementById('photoMeta').textContent = 'उदाहरण फोटो लोड की गई';
+
+      renderPreview();
+      showToast('उदाहरण डेटा और फोटो भर दी गई है।', 'info');
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      document.getElementById('personalForm').reset();
+      document.getElementById('photoInput').value = '';
+      state.photoDataUrl = null;
+      state.photoName = '';
+      state.photoMime = '';
+      document.getElementById('photoPreview').classList.add('hidden');
+      document.getElementById('photoPlaceholder').classList.remove('hidden');
+      document.getElementById('photoMeta').textContent = 'कोई फोटो नहीं चुनी गई';
+      renderPreview();
+      showToast('फॉर्म साफ कर दिया गया है।', 'info');
+    });
+
+    document.getElementById('btnCsv').addEventListener('click', exportCSV);
+    document.getElementById('btnExcel').addEventListener('click', exportExcel);
+    document.getElementById('btnWord').addEventListener('click', exportWord);
+    document.getElementById('btnAll').addEventListener('click', async () => {
+      const data = getFormData();
+      if (!validateRequired(data)) return;
+      exportCSV();
+      await exportExcel();
+      await exportWord();
+    });
+
+    renderPreview();
+  </script>
+</body>
+</html>
