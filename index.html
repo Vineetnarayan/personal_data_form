@@ -47,7 +47,7 @@
       <form id="loginForm" class="p-6 space-y-4" novalidate>
         <div>
           <label for="loginId" class="block text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1.5">लॉगिन आईडी (Login ID)</label>
-          <input id="loginId" type="text" required placeholder="अपना यूजरनेम लिखें" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
+          <input id="loginId" type="text" autocapitalize="none" autocomplete="username" required placeholder="अपना यूजरनेम लिखें" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition" />
         </div>
 
         <div>
@@ -63,15 +63,22 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md">
+        <div id="loginError" class="hidden px-3.5 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"></div>
+
+        <button id="btnLoginSubmit" type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md">
           लॉगिन करें
         </button>
 
         <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
           <span>डिफ़ॉल्ट ID: <strong class="text-slate-700">admin</strong> | पासवर्ड: <strong class="text-slate-700">123456</strong></span>
-          <button id="btnAutoDemoLogin" type="button" class="text-indigo-600 hover:text-indigo-700 font-semibold text-left sm:text-right">
-            डेमो लॉगिन भरें
-          </button>
+          <div class="flex items-center gap-3">
+            <button id="btnAutoDemoLogin" type="button" class="text-indigo-600 hover:text-indigo-700 font-semibold">
+              डेमो लॉगिन भरें
+            </button>
+            <button id="btnResetDefaultCreds" type="button" class="text-slate-500 hover:text-slate-700 underline">
+              रीसेट करें
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -386,17 +393,32 @@
       showToast('डेमो आईडी और पासवर्ड भर दिए गए हैं। अब लॉगिन करें।', 'info');
     });
 
+    document.getElementById('btnResetDefaultCreds').addEventListener('click', () => {
+      state.creds = { id: 'admin', pass: '123456' };
+      try {
+        localStorage.removeItem(CRED_STORAGE_KEY);
+      } catch (err) {}
+      document.getElementById('loginId').value = 'admin';
+      document.getElementById('loginPassword').value = '123456';
+      document.getElementById('loginError').classList.add('hidden');
+      showToast('डिफ़ॉल्ट आईडी (admin) और पासवर्ड (123456) रीसेट कर दिए गए।', 'info');
+    });
+
     document.getElementById('loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      const enteredId = document.getElementById('loginId').value.trim();
-      const enteredPass = document.getElementById('loginPassword').value;
+      const enteredId = document.getElementById('loginId').value.trim().toLowerCase();
+      const enteredPass = document.getElementById('loginPassword').value.trim();
+      const errBox = document.getElementById('loginError');
 
-      if (enteredId === state.creds.id && enteredPass === state.creds.pass) {
+      if (enteredId === state.creds.id.trim().toLowerCase() && enteredPass === state.creds.pass.trim()) {
+        errBox.classList.add('hidden');
         document.getElementById('loginView').classList.add('hidden');
         document.getElementById('appView').classList.remove('hidden');
         document.getElementById('activeUserLabel').textContent = state.creds.id;
         showToast('सफलतापूर्वक लॉगिन हो गया!', 'success');
       } else {
+        errBox.textContent = 'गलत लॉगिन आईडी या पासवर्ड। डिफ़ॉल्ट ID: admin और पासवर्ड: 123456 है (या "डेमो लॉगिन भरें" दबाएँ)।';
+        errBox.classList.remove('hidden');
         showToast('गलत लॉगिन आईडी या पासवर्ड। कृपया दोबारा जांचें।', 'error');
       }
     });
